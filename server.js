@@ -137,6 +137,25 @@ if (process.argv[2] === 'adduser') {
   process.exit(0);
 }
 
+// Automatisch einen Benutzer anlegen, wenn ADMIN_USER/ADMIN_PASS gesetzt sind.
+// Praktisch in der Cloud (Render): Variablen eintragen -> beim Start wird der
+// Benutzer angelegt oder sein Passwort aktualisiert.
+function adminAusUmgebung() {
+  const name = process.env.ADMIN_USER;
+  const pass = process.env.ADMIN_PASS;
+  if (!name || !pass) return;
+  const db = ladeBenutzer();
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = hashPasswort(pass, salt);
+  const vorhanden = db.benutzer.find(u => u.name.toLowerCase() === name.toLowerCase());
+  if (vorhanden) { vorhanden.salt = salt; vorhanden.hash = hash; }
+  else db.benutzer.push({ name, salt, hash });
+  speichereBenutzer(db);
+  console.log(`Benutzer "${name}" aus Umgebungsvariablen bereit.`);
+}
+
+adminAusUmgebung();
+
 app.listen(PORT, () => {
   console.log(`MyProject Server laeuft auf Port ${PORT}`);
   console.log(`Datenordner: ${DATEN_ORDNER}`);
