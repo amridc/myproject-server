@@ -55,7 +55,11 @@ async function alleFotos(fotosPfad) {
 // ── Anmeldung ────────────────────────────────────────────────
 const tokens = new Map();
 function auth(req, res, next) {
-  const t = (req.headers.authorization || '').replace('Bearer ', '');
+  // Token entweder aus dem Header ODER aus der Adresse (?token=...) akzeptieren.
+  // Letzteres ist nötig, damit Bilder in der App direkt angezeigt werden können.
+  const ausHeader = (req.headers.authorization || '').replace('Bearer ', '');
+  const ausUrl = req.query.token || '';
+  const t = ausHeader || ausUrl;
   if (t && tokens.has(t)) next(); else res.status(401).json({ fehler: 'Nicht angemeldet' });
 }
 
