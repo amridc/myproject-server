@@ -101,6 +101,19 @@ app.get('/projekte/:p/fotos', auth, async (req, res) => {
   res.json({ fotos: await alleFotos(path.join(PROJEKTE_ROOT, sicherName(req.params.p), 'Fotos')) });
 });
 
+// Alle Projekte samt aller Fotopfade auf einmal (fuer das Hol-Programm am Buero-PC)
+app.get('/alles', auth, async (req, res) => {
+  await fs.ensureDir(PROJEKTE_ROOT);
+  const liste = await fs.readdir(PROJEKTE_ROOT, { withFileTypes: true });
+  const projekte = [];
+  for (const e of liste) {
+    if (!e.isDirectory()) continue;
+    const fotos = await alleFotos(path.join(PROJEKTE_ROOT, e.name, 'Fotos'));
+    projekte.push({ name: e.name, fotos: fotos.map(f => f.pfad) });
+  }
+  res.json({ projekte });
+});
+
 app.get('/projekte/:p/foto', auth, async (req, res) => {
   const basis = path.resolve(path.join(PROJEKTE_ROOT, sicherName(req.params.p), 'Fotos'));
   const ziel = path.resolve(basis, req.query.datei || '');
